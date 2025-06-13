@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mongo
+    restart: always
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: admin
+        MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27017:27017
+
+  backend:
+    image: node:24-alpine
+    restart: always
+    volumes:                   # 1. Create a virtual volume 
+      - type: bind             # and bind it to the real folder
+        source: .              # 2. Bind ./backend
+        target: /app           # to /back (in the container)
+    working_dir: /app          # 3. Set workdir to /app
+    command: node --run dev       # 4. Run dev script in /app
+    ports:
+      - 3000:3000
