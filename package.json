@@ -8,10 +8,10 @@
   },
   "license": "ISC",
   "author": "Humberto Aleman",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "npm i; node ./index.js",
+    "dev": "npm i; node ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
