@@ -1,7 +1,7 @@
 services:
   db:
     image: mongo
-    restart: always
+    restart: unless_stopped
     environment:
         MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
         MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -10,7 +10,7 @@ services:
 
   backend:
     image: node:24-alpine
-    restart: always
+    restart: unless_stopped
     volumes:                   # 1. Create a virtual volume 
       - type: bind             # and bind it to the real folder
         source: .              # 2. Bind ./backend
