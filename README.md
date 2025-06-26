@@ -33,24 +33,24 @@ And the API will bind to [localhost:3000](127.0.0.1:3000)
 
 ### Weather
 
-- **GET** /weather/:source?city=\[city_name\]
+- **GET** /weather/:source?city=\[city_name\] - Jesus
   - Retrieves weather data from sources like OpenWeatherMap, WeatherAPI, or the local database. If there are no local data, it returns "No weather records."
-- **POST** /weather
+- **POST** /weather - Cris
   - Saves a custom weather report in the local database. Requires fields such as city, temperature, humidity, and condition (Sunny/Cloudy/Rainy/Storm).
-- **GET** /weather/history/:city
+- **GET** /weather/history/:city - Jesus
   - Returns all historical weather records of a specific city stored in the local database.
-- **DELETE** /weather/:id
+- **DELETE** /weather/:id - Cris
   - Deletes a weather record from the local database using its unique identifier.
 
 ### Earthquake
 
-- **GET** /earthquakes/:source?country=[country]
+- **GET** /earthquakes/:source?country=[country] - Jesus
   - Retrieves seismic data from sources like the USGS Earthquake API, EMSC, or the local database. If there are no data, it returns "No seismic records."
-- **POST** /earthquakes
+- **POST** /earthquakes - Humberto
   - Saves a custom seismic report in the local database. Required fields include magnitude, depth, location, and date.
-- **GET** /earthquakes/history/:country
+- **GET** /earthquakes/history/:country - Jesus
   - Returns all reported earthquakes in a specific country, retrieving the complete history from the local database.
-- **DELETE** /earthquakes/:id
+- **DELETE** /earthquakes/:id - Humberto
   - Deletes a specific seismic record from the local database using its unique identifier.
 
 ## Developing
