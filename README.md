@@ -6,7 +6,7 @@ WeatherAPI is a project for the course "Topicos Esceciales para la Programacion"
 
 - Aleman, Humberto 30.142.718
 - Carnevali, Cristina 30.395.024
-- falta el otro pana
+- Jesus Noriega 29651090
 
 ## Dependencies
 
