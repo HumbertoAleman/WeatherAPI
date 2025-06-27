@@ -1,7 +1,7 @@
 services:
   db:
     image: mongo
-    restart: unless_stopped
+    restart: unless-stopped
     environment:
         MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
         MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -10,12 +10,14 @@ services:
 
   backend:
     image: node:24-alpine
-    restart: unless_stopped
+    restart: unless-stopped
     volumes:                   # 1. Create a virtual volume 
       - type: bind             # and bind it to the real folder
         source: .              # 2. Bind ./backend
         target: /app           # to /back (in the container)
     working_dir: /app          # 3. Set workdir to /app
-    command: node --run dev       # 4. Run dev script in /app
+    command: sh -c "npm i && clear && node --run dev"       # 4. Run dev script in /app
+    env_file:
+      - .env
     ports:
       - 3000:3000
