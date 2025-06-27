@@ -1,4 +1,6 @@
 import express from 'express'
+import mongoose from 'mongoose'
+import dotenv from 'dotenv/config'
 
 import earthquakeDelete from './earthquake/earthquake.delete.js'
 import earthquakeGet from './earthquake/earthquake.get.js'
@@ -9,19 +11,30 @@ import weatherGet from './weather/weather.get.js'
 import weatherHistory from './weather/history.get.js'
 import weatherPost from './weather/weather.post.js'
 
-const app = express()
-const port = 3000
+async function main() {
+	const connection_url = process.env.DATABASE_URL
+	await mongoose.connect(connection_url)
+		.then(initialize_app)
+		.catch(err => console.error(`Could not start WeatherAPI due to ${err})`))
+}
 
-app.get('/weather/:source', weatherGet)
-app.post('/weather', weatherPost)
-app.get('/weather/history/:city', weatherHistory)
-app.delete('/weather/:id', weatherDelete)
+async function initialize_app() {
+	const app = express()
+	const port = process.env.PORT
 
-app.get('/earthquakes/:source', earthquakeGet)
-app.post('/earthquakes', earthquakePost)
-app.get('/earthquakes/history/:country', earthquakeHistory)
-app.delete('/earthquakes/:id', earthquakeDelete)
+	app.get('/weather/:source', weatherGet)
+	app.post('/weather', weatherPost)
+	app.get('/weather/history/:city', weatherHistory)
+	app.delete('/weather/:id', weatherDelete)
 
-app.listen(port, _ => {
-	console.log(`WeatherAPI listening on port ${port}`)
-})
+	app.get('/earthquakes/:source', earthquakeGet)
+	app.post('/earthquakes', earthquakePost)
+	app.get('/earthquakes/history/:country', earthquakeHistory)
+	app.delete('/earthquakes/:id', earthquakeDelete)
+
+	app.listen(port, _ => {
+		console.log(`WeatherAPI listening on port ${port}`)
+	})
+}
+
+await main();
