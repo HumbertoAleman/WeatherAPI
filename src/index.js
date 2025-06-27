@@ -11,6 +11,8 @@ import weatherGet from './weather/weather.get.js'
 import weatherHistory from './weather/history.get.js'
 import weatherPost from './weather/weather.post.js'
 
+const app = express()
+
 async function main() {
 	const connection_url = process.env.DATABASE_URL
 	await mongoose.connect(connection_url)
@@ -19,7 +21,6 @@ async function main() {
 }
 
 async function initialize_app() {
-	const app = express()
 	const port = process.env.PORT
 
 	app.get('/weather/:source', weatherGet)
@@ -35,6 +36,9 @@ async function initialize_app() {
 	app.listen(port, _ => {
 		console.log(`WeatherAPI listening on port ${port}`)
 	})
+
 }
 
 await main();
+
+export default app;
