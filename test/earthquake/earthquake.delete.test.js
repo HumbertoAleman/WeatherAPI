@@ -24,3 +24,18 @@ afterAll(async () => {
 	await mongoose.connection.dropDatabase();
 	await mongoose.connection.close();
 });
+
+describe('DELETE /earthquakes/:id', () => {
+	it('Should delete an earthquake record', async () => {
+		const response = await request(app)
+			.delete(`/earthquakes/${sampleItem.id}`)
+			.expect(200)
+
+		expect(response.body).toHaveProperty('_id');
+		expect(response.body.id).toBe(sampleItem.id);
+		expect(response.body.magnitude).toBe(sampleItem.magnitude);
+		expect(response.body.depth).toBe(sampleItem.depth);
+		expect(response.body.location).toBe(sampleItem.location);
+		expect(new Date(response.body.date).toISOString()).toBe(new Date(sampleItem.date).toISOString());
+	})
+})
