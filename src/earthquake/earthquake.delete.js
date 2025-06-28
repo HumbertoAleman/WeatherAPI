@@ -2,7 +2,7 @@ import Earthquake from './earthquake.schema.js'
 
 /**
  * @swagger
- * /earthquake:
+ * /earthquakes:
  *   delete:
  *     summary: Delete an earthquake record
  *     description: Deletes an earthquake record by its ID. The ID must follow the format `sismo_{{number}}`.
