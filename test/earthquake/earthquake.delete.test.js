@@ -44,4 +44,11 @@ describe('DELETE /earthquakes/:id', () => {
 			.delete(`/earthquakes/sismo_23`)
 			.expect(204)
 	})
+
+	it('Should return 400 when id is malformed', async () => {
+		const response = await request(app)
+			.delete(`/earthquakes/incorrect_format`)
+			.expect(400)
+		expect(response.body).toHaveProperty('message');
+	})
 })
