@@ -38,4 +38,10 @@ describe('DELETE /earthquakes/:id', () => {
 		expect(response.body.location).toBe(sampleItem.location);
 		expect(new Date(response.body.date).toISOString()).toBe(new Date(sampleItem.date).toISOString());
 	})
+
+	it('Should return 204 when no content is found', async () => {
+		await request(app)
+			.delete(`/earthquakes/sismo_23`)
+			.expect(204)
+	})
 })
