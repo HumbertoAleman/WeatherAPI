@@ -69,4 +69,21 @@ describe('POST /earthquakes', () => {
 
 		expect(response.body).toHaveProperty('message');
 	});
+
+	it('Should return 400 for invalid id format', async () => {
+		const invalidItem = {
+			id: "1_sismo", // INCORRECT
+			magnitude: 5.4,
+			depth: 30,
+			location: "Chile",
+			date: "2023-11-15"
+		};
+
+		const response = await request(app)
+			.post('/earthquakes')
+			.send(invalidItem)
+			.expect(400);
+
+		expect(response.body).toHaveProperty('message');
+	});
 })
