@@ -53,4 +53,20 @@ describe('POST /earthquakes', () => {
 		}
 	})
 
+	it('Should return 400 for invalid date format', async () => {
+		const invalidItem = {
+			id: "sismo_1",
+			magnitude: 5.4,
+			depth: 30,
+			location: "Chile",
+			date: "15-11-2023" // INCORRECT
+		};
+
+		const response = await request(app)
+			.post('/earthquakes')
+			.send(invalidItem)
+			.expect(400);
+
+		expect(response.body).toHaveProperty('message');
+	});
 })
