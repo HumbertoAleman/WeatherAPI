@@ -1,6 +1,8 @@
 import express from 'express'
 import mongoose from 'mongoose'
 import dotenv from 'dotenv/config'
+import swaggerUi from 'swagger-ui-express'
+import swaggerDocs from './swagger.js'
 
 import earthquakeDelete from './earthquake/earthquake.delete.js'
 import earthquakeGet from './earthquake/earthquake.get.js'
@@ -23,6 +25,9 @@ async function main() {
 async function initialize_app() {
 	const port = process.env.PORT
 
+	app.use(express.json())
+	app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 	app.get('/weather/:source', weatherGet)
 	app.post('/weather', weatherPost)
 	app.get('/weather/history/:city', weatherHistory)
@@ -36,7 +41,6 @@ async function initialize_app() {
 	app.listen(port, _ => {
 		console.log(`WeatherAPI listening on port ${port}`)
 	})
-
 }
 
 await main();
