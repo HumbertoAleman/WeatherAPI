@@ -35,4 +35,22 @@ describe('POST /earthquakes', () => {
 		expect(response.body.location).toBe(newItem.location);
 		expect(new Date(response.body.date).toISOString()).toBe(new Date(newItem.date).toISOString());
 	})
+
+	it('Should return 400 for missing properties', async () => {
+		const cases = [
+			{ magnitude: 5.4, depth: 30, location: "Chile", date: "2023-11-15" },     // Missing id
+			{ id: "sismo_1", depth: 30, location: "Chile", date: "2023-11-15" },      // Missing magnitude
+			{ id: "sismo_1", magnitude: 5.4, location: "Chile", date: "2023-11-15" }, // Missing depth
+			{ id: "sismo_1", magnitude: 5.4, depth: 30, date: "2023-11-15" },         // Missing location
+			{ id: "sismo_1", magnitude: 5.4, depth: 30, location: "Chile" }           // Missing date
+		]
+		for (const n of cases) {
+			const response = await request(app)
+				.post('/earthquakes')
+				.send(n)
+				.expect(400)
+			expect(response.body).toHaveProperty('message');
+		}
+	})
+
 })
