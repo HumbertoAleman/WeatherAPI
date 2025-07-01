@@ -5,11 +5,14 @@ import mongoose from 'mongoose'
 
 beforeAll(async () => {
 	const connection_url = process.env.DATABASE_URL
-	await mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true });
+	mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true })
 });
 
-afterAll(async () => {
+afterEach(async () => {
 	await mongoose.connection.dropDatabase();
+})
+
+afterAll(async () => {
 	await mongoose.connection.close();
 });
 
