@@ -13,12 +13,11 @@ const sampleItem = {
 
 beforeAll(async () => {
 	await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-
-	await request(app)
-		.post('/earthquakes')
-		.send(sampleItem)
-		.expect(201)
 });
+
+beforeEach(async () => {
+	await mongoose.connection.dropDatabase();
+})
 
 afterAll(async () => {
 	await mongoose.connection.dropDatabase();
@@ -27,6 +26,11 @@ afterAll(async () => {
 
 describe('DELETE /earthquakes/:id', () => {
 	it('Should delete an earthquake record', async () => {
+		await request(app)
+			.post('/earthquakes')
+			.send(sampleItem)
+			.expect(201)
+
 		const response = await request(app)
 			.delete(`/earthquakes/${sampleItem.id}`)
 			.expect(200)
