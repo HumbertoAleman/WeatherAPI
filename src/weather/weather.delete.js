@@ -13,7 +13,7 @@ import Weather from './weather.schema.js'
  *         description: The ID of the weather record to delete.
  *         schema:
  *           type: string
- *           pattern: '^sismo_\\d+$'
+ *           pattern: '^clima_\\d+$'
  *     responses:
  *       '200':
  *         description: Successfully deleted the weather record.
