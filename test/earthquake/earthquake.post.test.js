@@ -86,4 +86,19 @@ describe('POST /earthquakes', () => {
 
 		expect(response.body).toHaveProperty('message');
 	});
+
+	it('Should return 400 for negative numbers', async () => {
+		const newItem = [
+			{ id: "sismo_1", magnitude: -5.4, depth: 30, location: "Chile", date: "2023-11-15" },
+			{ id: "sismo_2", magnitude: 5.4, depth: -30, location: "Chile", date: "2023-11-15" }
+		];
+
+		for (const n of cases) {
+			const response = await request(app)
+				.post('/earthquakes')
+				.send(n)
+				.expect(400)
+			expect(response.body).toHaveProperty('message');
+		}
+	})
 })
