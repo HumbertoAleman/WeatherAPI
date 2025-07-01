@@ -5,8 +5,12 @@ import mongoose from 'mongoose'
 
 beforeAll(async () => {
 	const connection_url = process.env.DATABASE_URL
-	await mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true });
+	await mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true })
 });
+
+beforeEach(async () => {
+	await mongoose.connection.dropDatabase();
+})
 
 afterAll(async () => {
 	await mongoose.connection.dropDatabase();
@@ -86,4 +90,32 @@ describe('POST /earthquakes', () => {
 
 		expect(response.body).toHaveProperty('message');
 	});
+
+	it('Should return 400 for negative numbers', async () => {
+		const cases = [
+			{ id: "sismo_1", magnitude: -5.4, depth: 30, location: "Chile", date: "2023-11-15" },
+			{ id: "sismo_2", magnitude: 5.4, depth: -30, location: "Chile", date: "2023-11-15" }
+		];
+
+		for (const n of cases) {
+			const response = await request(app)
+				.post('/earthquakes')
+				.send(n)
+				.expect(400)
+			expect(response.body).toHaveProperty('message');
+		}
+	})
+
+	it('Should return 400 for repeated ids', async () => {
+		const newItem = { id: "sismo_1", magnitude: 5.4, depth: 30, location: "Chile", date: "2023-11-15" };
+		await request(app)
+			.post('/earthquakes')
+			.send(newItem)
+		const identicalItem = { id: "sismo_1", magnitude: 5.4, depth: 30, location: "Chile", date: "2023-11-15" };
+		const newResponse = await request(app)
+			.post('/earthquakes')
+			.send(identicalItem)
+			.expect(400)
+		expect(newResponse.body).toHaveProperty('message');
+	})
 })
