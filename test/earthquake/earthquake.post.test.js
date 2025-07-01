@@ -88,7 +88,7 @@ describe('POST /earthquakes', () => {
 	});
 
 	it('Should return 400 for negative numbers', async () => {
-		const newItem = [
+		const cases = [
 			{ id: "sismo_1", magnitude: -5.4, depth: 30, location: "Chile", date: "2023-11-15" },
 			{ id: "sismo_2", magnitude: 5.4, depth: -30, location: "Chile", date: "2023-11-15" }
 		];
@@ -100,5 +100,26 @@ describe('POST /earthquakes', () => {
 				.expect(400)
 			expect(response.body).toHaveProperty('message');
 		}
+	})
+
+	it('Should return 400 for repeated ids', async () => {
+		const newItem = { id: "sismo_1", magnitude: 5.4, depth: 30, location: "Chile", date: "2023-11-15" };
+		const response = await request(app)
+			.post('/earthquakes')
+			.send(newItem)
+			.expect(201)
+		expect(response.body).toHaveProperty('_id');
+		expect(response.body.id).toBe(newItem.id);
+		expect(response.body.magnitude).toBe(newItem.magnitude);
+		expect(response.body.depth).toBe(newItem.depth);
+		expect(response.body.location).toBe(newItem.location);
+		expect(new Date(response.body.date).toISOString()).toBe(new Date(newItem.date).toISOString());
+
+		const identicalItem = { id: "sismo_1", magnitude: 5.4, depth: 30, location: "Chile", date: "2023-11-15" };
+		const newResponse = await request(app)
+			.post('/earthquakes')
+			.send(identicalItem)
+			.expect(400)
+		expect(newResponse.body).toHaveProperty('message');
 	})
 })
