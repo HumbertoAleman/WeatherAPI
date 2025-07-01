@@ -1,11 +1,16 @@
+import dotenv from 'dotenv/config'
 import app from '../../src/index.js'
 import request from 'supertest'
 import mongoose from 'mongoose'
 
 beforeAll(async () => {
 	const connection_url = process.env.DATABASE_URL
-	await mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true });
+	await mongoose.connect(connection_url, { useNewUrlParser: true, useUnifiedTopology: true })
 });
+
+beforeEach(async () => {
+	await mongoose.connection.dropDatabase();
+})
 
 afterAll(async () => {
 	await mongoose.connection.dropDatabase();
@@ -105,6 +110,18 @@ describe('POST /weather', () => {
 	});
 
     it('Should return 400 for repeated id', async () => {
+		const newItem = {
+			id: "clima_1",
+            city: "Caracas",
+			temperature: 30.7,
+			humidity: 82,
+			condition: "Soleado"
+		};
+
+		await request(app)
+			.post('/weather')
+			.send(newItem)
+		
 		const invalidItem = {
 			id: "clima_1", // INCORRECT
             city: "Caracas",
