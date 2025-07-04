@@ -4,6 +4,8 @@ import request from 'supertest';
 import mongoose from 'mongoose';
 
 // Muestra de datos para las pruebas
+
+//Estoy agregando esto a ver si funciona
 const sampleItem1 = {
     id: "clima_1",
     city: "Caracas",
