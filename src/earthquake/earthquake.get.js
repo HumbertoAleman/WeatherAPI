@@ -1,4 +1,4 @@
-mport Earthquake from './earthquake.schema.js'; // Asegúrate de que la ruta a tu modelo sea correcta
+import Earthquake from './earthquake.schema.js'; // Asegúrate de que la ruta a tu modelo sea correcta
 
 /**
  * @swagger
