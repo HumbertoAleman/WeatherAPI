@@ -30,7 +30,8 @@ const sampleItem3 = {
 
 // --- Configuración de la Base de Datos para Pruebas ---
 beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+    // Las opciones useNewUrlParser y useUnifiedTopology ya no son necesarias
+    await mongoose.connect(process.env.DATABASE_URL);
 });
 
 beforeEach(async () => {
@@ -59,13 +60,12 @@ describe('GET /earthquakes/history/:country', () => {
         expect(response.body[1].location).toBe(sampleItem2.location);
     });
 
-    // --- BLOQUE ACTUALIZADO ---
     it('Should return 204 when no records are found for a country', async () => {
         const response = await request(app)
             .get('/earthquakes/history/Uruguay')
-            .expect(204); // Cambio: Se espera un 204 en lugar de 404
+            .expect(204);
 
-        // Cambio: Se verifica que el cuerpo de la respuesta esté vacío
+        // Se verifica que el cuerpo de la respuesta esté vacío
         expect(response.body).toEqual({});
     });
 })
