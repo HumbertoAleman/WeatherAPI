@@ -3,34 +3,33 @@ import Earthquake from './earthquake.schema.js';
 /**
  * @swagger
  * /earthquakes/history/{country}:
- * get:
- * summary: Obtener historial de sismos por país
- * description: >-
- * Retorna todos los sismos reportados en un país específico, recuperando
- * el historial completo desde la base de datos local.
- * tags:
- * - Sismología
- * parameters:
- * - name: country
- * in: path
- * required: true
- * description: El nombre del país para el cual se desea obtener el historial de sismos.
- * schema:
- * type: string
- * example: Chile
- * responses:
- * '200':
- * description: OK. Retorna un array de objetos de sismos.
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * $ref: '#/components/schemas/Earthquake'
- * '204':
- * description: No Content. No se encontraron registros sísmicos para el país especificado.
+ *   get:
+ *     summary: Obtener historial de sismos por país
+ *     description: >-
+ *       Retorna todos los sismos reportados en un país específico, recuperando
+ *       el historial completo desde la base de datos local.
+ *     tags:
+ *       - Sismología
+ *     parameters:
+ *       - name: country
+ *         in: path
+ *         required: true
+ *         description: El nombre del país para el cual se desea obtener el historial de sismos.
+ *         schema:
+ *           type: string
+ *           example: Chile
+ *     responses:
+ *       '200':
+ *         description: OK. Retorna un array de objetos de sismos.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Earthquake'
+ *       '204':
+ *         description: No Content. No se encontraron registros sísmicos para el país especificado.
  */
-import Earthquake from './earthquake.schema.js';
 
 const getEarthquakeHistoryByCountry = async (req, res) => {
     try {
