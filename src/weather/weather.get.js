@@ -37,7 +37,9 @@ import Weather from './weather.schema.js';
  * '204':
  * description: No Content. No se encontraron registros para los parámetros especificados.
  */
-export const getWeatherBySource = async (req, res) => {
+import Weather from './weather.schema.js';
+
+const getWeatherBySource = async (req, res) => {
     const { source } = req.params;
     const { city } = req.query;
 
@@ -58,3 +60,5 @@ export const getWeatherBySource = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export default getWeatherBySource;

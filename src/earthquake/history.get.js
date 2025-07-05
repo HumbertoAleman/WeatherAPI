@@ -30,7 +30,9 @@ import Earthquake from './earthquake.schema.js';
  * '204':
  * description: No Content. No se encontraron registros sísmicos para el país especificado.
  */
-export const getEarthquakeHistoryByCountry = async (req, res) => {
+import Earthquake from './earthquake.schema.js';
+
+const getEarthquakeHistoryByCountry = async (req, res) => {
     try {
         const { country } = req.params;
         const earthquakes = await Earthquake.find({ location: new RegExp(country, 'i') });
@@ -45,3 +47,5 @@ export const getEarthquakeHistoryByCountry = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export default getEarthquakeHistoryByCountry;

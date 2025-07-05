@@ -30,7 +30,9 @@ import Weather from './weather.schema.js';
  * '204':
  * description: No Content. No se encontraron registros para la ciudad especificada.
  */
-export const getWeatherHistoryByCity = async (req, res) => {
+import Weather from './weather.schema.js';
+
+const getWeatherHistoryByCity = async (req, res) => {
     try {
         const { city } = req.params;
         const weatherHistory = await Weather.find({ city: new RegExp(city, 'i') });
@@ -45,3 +47,5 @@ export const getWeatherHistoryByCity = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export default getWeatherHistoryByCity;

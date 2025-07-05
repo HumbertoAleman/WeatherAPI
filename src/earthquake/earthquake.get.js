@@ -37,7 +37,9 @@ import Earthquake from './earthquake.schema.js';
  * '204':
  * description: No Content. No se encontraron registros para los parámetros especificados.
  */
-export const getEarthquakesBySource = async (req, res) => {
+import Earthquake from './earthquake.schema.js';
+
+const getEarthquakesBySource = async (req, res) => {
     const { source } = req.params;
     const { country } = req.query;
 
@@ -58,3 +60,5 @@ export const getEarthquakesBySource = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor" });
     }
 };
+
+export default getEarthquakesBySource;
