@@ -2,83 +2,59 @@ import Weather from './weather.schema.js';
 
 /**
  * @swagger
- * /weather/{id}:
+ * /weather/{source}:
  * get:
- * summary: Obtener un registro climático por ID
- * description: Retorna un registro climático específico por su ID. El ID debe seguir el formato `clima_{{number}}`.
+ * summary: Obtiene datos climáticos de una fuente
+ * description: >-
+ * Obtiene datos climáticos de una fuente específica. Si la fuente es 'local',
+ * busca en la base de datos por la ciudad especificada en el query param 'city'.
  * tags:
  * - Meteorología
  * parameters:
- * - name: id
+ * - name: source
  * in: path
  * required: true
- * description: El ID del registro climático a obtener.
+ * description: La fuente de los datos ('local' para la base de datos).
  * schema:
  * type: string
- * pattern: '^clima_\\d+$'
- * example: "clima_12345"
+ * example: local
+ * - name: city
+ * in: query
+ * required: true
+ * description: La ciudad para filtrar los resultados cuando la fuente es 'local'.
+ * schema:
+ * type: string
+ * example: Caracas
  * responses:
  * '200':
- * description: OK. Retorna el registro climático encontrado.
+ * description: OK. Retorna un array con los registros climáticos.
  * content:
  * application/json:
  * schema:
- * type: object
- * properties:
- * id:
- * type: string
- * example: "clima_12345"
- * city:
- * type: string
- * example: "Caracas"
- * temperature:
- * type: number
- * example: 25.0
- * humidity:
- * type: number
- * example: 80
- * condition:
- * type: string
- * example: "Soleado"
- * '404':
- * description: Not Found. No se encontró el registro climático.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: "No se encontró el registro climático"
- * '500':
- * description: Internal Server Error.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: "Error interno del servidor al buscar el registro climático"
+ * type: array
+ * items:
+ * $ref: '#/components/schemas/Weather'
+ * '204':
+ * description: No Content. No se encontraron registros para los parámetros especificados.
  */
-const getWeatherById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Se busca por el campo 'id' personalizado, no por '_id'
-        const weatherRecord = await Weather.findOne({ id: id });
+export const getWeatherBySource = async (req, res) => {
+    const { source } = req.params;
+    const { city } = req.query;
 
-        if (!weatherRecord) {
-            return res.status(404).json({ message: "No se encontró el registro climático" });
+    if (source.toLowerCase() !== 'local') {
+        return res.status(400).json({ message: "Fuente no válida. Por ahora, solo se acepta 'local'." });
+    }
+
+    try {
+        const weatherRecords = await Weather.find({ city: new RegExp(city, 'i') });
+
+        if (weatherRecords.length === 0) {
+            return res.status(204).send();
         }
 
-        res.status(200).json(weatherRecord);
-
+        res.status(200).json(weatherRecords);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Error interno del servidor al buscar el registro climático" });
+        res.status(500).json({ message: "Error interno del servidor" });
     }
-};
-
-module.exports = {
-    getWeatherById
 };

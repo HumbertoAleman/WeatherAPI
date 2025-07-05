@@ -1,87 +1,60 @@
-import Earthquake from './earthquake.schema.js'; // Asegúrate de que la ruta a tu modelo sea correcta
+import Earthquake from './earthquake.schema.js';
 
 /**
  * @swagger
- * paths:
- *   /earthquakes/history/{country}:
- *     get:
- *       summary: Obtener historial de sismos por país
- *       description: >-
- *         Retorna todos los sismos reportados en un país específico, recuperando
- *         el historial completo desde la base de datos local.
- *       tags:
- *         - Sismología
- *       parameters:
- *         - name: country
- *           in: path
- *           required: true
- *           description: El nombre del país para el cual se desea obtener el historial de sismos.
- *           schema:
- *             type: string
- *           example: Chile
- *       responses:
- *         '200':
- *           description: OK. La solicitud fue exitosa. Retorna un array de objetos de sismos.
- *           content:
- *             application/json:
- *               schema:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                       example: "64aa8b39a7b5e4b2e8e4a1c1"
- *                     magnitude:
- *                       type: number
- *                       example: 5.4
- *                     location:
- *                       type: string
- *                       example: "Coquimbo, Chile"
- *                     date:
- *                       type: string
- *                       format: date-time
- *                       example: "2023-11-15T00:00:00.000Z"
- *                     depth:
- *                       type: number
- *                       example: 30
- *         '404':
- *           description: Not Found. No se encontraron registros sísmicos para el país especificado.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     example: "No hay registros sísmicos para ese país"
- *         '500':
- *           description: Internal Server Error. Ocurrió un error en el servidor al procesar la solicitud.
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   message:
- *                     type: string
- *                     example: "Error interno del servidor al buscar los sismos"
+ * /earthquakes/{source}:
+ * get:
+ * summary: Obtiene datos sísmicos de una fuente
+ * description: >-
+ * Obtiene datos sísmicos de una fuente específica. Si la fuente es 'local',
+ * busca en la base de datos por el país especificado en el query param 'country'.
+ * tags:
+ * - Sismología
+ * parameters:
+ * - name: source
+ * in: path
+ * required: true
+ * description: La fuente de los datos ('local' para la base de datos).
+ * schema:
+ * type: string
+ * example: local
+ * - name: country
+ * in: query
+ * required: true
+ * description: El país para filtrar los resultados cuando la fuente es 'local'.
+ * schema:
+ * type: string
+ * example: Chile
+ * responses:
+ * '200':
+ * description: OK. Retorna un array con los registros sísmicos.
+ * content:
+ * application/json:
+ * schema:
+ * type: array
+ * items:
+ * $ref: '#/components/schemas/Earthquake'
+ * '204':
+ * description: No Content. No se encontraron registros para los parámetros especificados.
  */
+export const getEarthquakesBySource = async (req, res) => {
+    const { source } = req.params;
+    const { country } = req.query;
 
-export const getEarthquakesByCountry = async (req, res) => {
+    if (source.toLowerCase() !== 'local') {
+        return res.status(400).json({ message: "Fuente no válida. Por ahora, solo se acepta 'local'." });
+    }
+
     try {
-        const { country } = req.params;
-
         const earthquakes = await Earthquake.find({ location: new RegExp(country, 'i') });
 
         if (earthquakes.length === 0) {
-            return res.status(404).json({ message: "No hay registros sísmicos para ese país" });
+            return res.status(204).send();
         }
 
         res.status(200).json(earthquakes);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Error interno del servidor al buscar los sismos" });
+        res.status(500).json({ message: "Error interno del servidor" });
     }
 };
-
-export default getEarthquakesByCountry;

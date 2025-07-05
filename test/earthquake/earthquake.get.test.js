@@ -34,12 +34,10 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-
     await mongoose.connection.db.collection('earthquakes').deleteMany({});
 });
 
 afterAll(async () => {
-
     await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
 });
@@ -48,16 +46,13 @@ afterAll(async () => {
 
 describe('GET /earthquakes/history/:country', () => {
     it('Should return all earthquake records for a specific country', async () => {
-
         await request(app).post('/earthquakes').send(sampleItem1);
         await request(app).post('/earthquakes').send(sampleItem2);
         await request(app).post('/earthquakes').send(sampleItem3);
 
-
         const response = await request(app)
             .get(`/earthquakes/history/${sampleItem1.location}`)
             .expect(200);
-
 
         expect(response.body).toBeInstanceOf(Array);
         expect(response.body.length).toBe(2); // Deben haber 2 sismos de Chile
@@ -65,11 +60,14 @@ describe('GET /earthquakes/history/:country', () => {
         expect(response.body[1].location).toBe(sampleItem2.location);
     });
 
-    it('Should return 404 when no records are found for a country', async () => {
+    // --- BLOQUE ACTUALIZADO ---
+    it('Should return 204 when no records are found for a country', async () => {
         const response = await request(app)
             .get('/earthquakes/history/Uruguay')
-            .expect(404);
+            .expect(204); // Se espera un 204 en lugar de 404
 
-        expect(response.body).toHaveProperty('message', 'No hay registros sísmicos para ese país');
+        // Se verifica que el cuerpo de la respuesta esté vacío
+        expect(response.body).toEqual({});
+        expect(response.text).toBe('');
     });
 })
