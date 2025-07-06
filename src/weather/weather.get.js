@@ -1,4 +1,5 @@
 import Weather from './weather.schema.js';
+import axios from 'axios';
 
 /**
  * @swagger
@@ -14,10 +15,10 @@ import Weather from './weather.schema.js';
  *       - name: source
  *         in: path
  *         required: true
- *         description: La fuente de los datos ('local' para la base de datos)
+ *         description: La fuente de los datos ('local', 'USGS', 'EMSC').
  *         schema:
  *           type: string
- *           enum: [local]
+ *           enum: [local, USGS, EMSC]
  *           example: local
  *       - name: city
  *         in: query
@@ -60,10 +61,10 @@ const getWeatherBySource = async (req, res) => {
     const { city } = req.query;
 
     // Validación de source
-    if (source.toLowerCase() !== 'local') {
+    if (!['local', 'usgs', 'emsc'].includes(source.toLowerCase())) {
         return res.status(400).json({ 
-            message: "Fuente no válida. Solo se acepta 'local'",
-            valid_sources: ["local"]
+            message: "Fuente no válida. Las fuentes permitidas son: 'local', 'USGS', 'EMSC'.",
+            valid_sources: ["local", "USGS", "EMSC"]
         });
     }
 
@@ -78,14 +79,40 @@ const getWeatherBySource = async (req, res) => {
     }
 
     try {
-        const sanitizedCity = city.trim().replace(/\s+/g, ' ');
-        const weatherRecords = await Weather.find({ 
-            city: new RegExp(`^${sanitizedCity}$`, 'i') 
-        });
+        let weatherRecords;
 
-        if (weatherRecords.length === 0) {
+        switch (source.toLowerCase()) {
+            case 'local':
+                const sanitizedCity = city.trim().replace(/\s+/g, ' ');
+                weatherRecords = await Weather.find({ 
+                    city: new RegExp(`^${sanitizedCity}$`, 'i') 
+                });
+                break;
+
+            case 'usgs':
+                // Obtener datos de la API de USGS
+                const usgsResponse = await axios.get(`https://api.weather.com/v3/wx/conditions/current?city=${city}&apiKey=YOUR_API_KEY`);
+                weatherRecords = [{
+                    temperature: usgsResponse.data.temperature,
+                    description: usgsResponse.data.weather,
+                    city: usgsResponse.data.city,
+                }];
+                break;
+
+            case 'emsc':
+                // Obtener datos de la API de EMSC
+                const emscResponse = await axios.get(`https://api.emsc-csem.org/v1/weather?city=${city}`);
+                // Aquí deberías procesar la respuesta de EMSC según su formato
+                weatherRecords = emscResponse.data; // Ajusta esto según la estructura de la respuesta
+                break;
+
+            default:
+                return res.status(400).json({ message: "Fuente no válida." });
+        }
+
+        if (!weatherRecords || weatherRecords.length === 0) {
             return res.status(404).json({ 
-                message: `No se encontraron registros para la ciudad '${sanitizedCity}'`
+                message: `No se encontraron registros para la ciudad '${city}'`
             });
         }
 
