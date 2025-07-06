@@ -45,49 +45,28 @@ import axios from 'axios';
  */
 
 const getEarthquakeHistoryByCountry = async (req, res) => {
-    const { source } = req.params;
-    const { country } = req.params;
+	const { country } = req.params;
 
-    try {
-        let earthquakes;
+	if (country === undefined)
+		return res.status(400)
+			.type('json')
+			.send(JSON.stringify({ message: "Error: country cannot be undefined" }))
 
-        switch (source.toLowerCase()) {
-            case 'local':
-                // Buscar en la base de datos local (MongoDB)
-                earthquakes = await Earthquake.find({ location: new RegExp(country, 'i') });
-                break;
+	let result
+	try {
+		result = await Earthquake.find({ location: country })
+	} catch (e) {
+		return res.status(500).json({ message: `Ha ocurrido un error ${e}` });
+	}
 
-            case 'usgs':
-                // Obtener datos de la API de USGS
-                const usgsResponse = await axios.get(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventid=${country}`);
-                earthquakes = usgsResponse.data.features.map(feature => ({
-                    magnitude: feature.properties.mag,
-                    location: feature.properties.place,
-                    date: new Date(feature.properties.time),
-                    depth: feature.geometry.coordinates[2],
-                }));
-                break;
+	if (result.length === 0)
+		return res.status(404)
+			.type('json')
+			.send(JSON.stringify({ message: "No hay registros sismicos" }))
 
-            case 'emsc':
-                // Obtener datos de la API de EMSC
-                const emscResponse = await axios.get(`https://www.emsc-csem.org/Earthquake/earthquake.php?id=${country}`);
-                // Aquí deberías procesar la respuesta de EMSC según su formato
-                earthquakes = emscResponse.data; // Ajusta esto según la estructura de la respuesta
-                break;
-
-            default:
-                return res.status(400).json({ message: "Fuente no válida. Las fuentes permitidas son: 'local', 'USGS', 'EMSC'." });
-        }
-
-        if (!earthquakes || earthquakes.length === 0) {
-            return res.status(204).send();
-        }
-
-        res.status(200).json(earthquakes);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error interno del servidor" });
-    }
+	return res.status(200)
+		.type('json')
+		.send(JSON.stringify(result))
 };
 
 export default getEarthquakeHistoryByCountry;
