@@ -4,60 +4,152 @@ import Earthquake from './earthquake.schema.js';
  * @swagger
  * /earthquakes/{source}:
  *   get:
- *     summary: Obtiene datos sísmicos de una fuente
- *     description: >-
- *       Obtiene datos sísmicos de una fuente específica. Si la fuente es 'local',
- *       busca en la base de datos por el país especificado en el query param 'country'.
- *     tags:
- *       - Sismología
+ *     summary: Retrieve earthquake data by source
+ *     description: Fetches earthquake information based on the specified source and country. Supports multiple sources including local database, USGS, and EMSC.
  *     parameters:
  *       - name: source
  *         in: path
  *         required: true
- *         description: La fuente de los datos ('local' para la base de datos).
+ *         description: The source of the earthquake data. Valid options are 'local', 'USGS', and 'EMSC'.
  *         schema:
  *           type: string
- *           example: local
+ *           enum: [local, USGS, EMSC]
  *       - name: country
  *         in: query
  *         required: true
- *         description: El país para filtrar los resultados cuando la fuente es 'local'.
+ *         description: The name of the country for which to retrieve earthquake data.
  *         schema:
  *           type: string
- *           example: Chile
  *     responses:
- *       '200':
- *         description: OK. Retorna un array con los registros sísmicos.
+ *       200:
+ *         description: Successfully retrieved earthquake data.
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Earthquake'
- *       '204':
- *         description: No Content. No se encontraron registros para los parámetros especificados.
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                 features:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                         mag:
+ *                           type: number
+ *                         place:
+ *                           type: string
+ *                         time:
+ *                           type: integer
+ *                         coordinates:
+ *                           type: array
+ *                           items:
+ *                             type: number
+ *       400:
+ *         description: Invalid source provided.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: No earthquake records found for the specified country.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: An error occurred while processing the request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-
 const getEarthquakesBySource = async (req, res) => {
-    const { source } = req.params;
-    const { country } = req.query;
+	const { source } = req.params;
+	const { country } = req.query;
 
-    if (source.toLowerCase() !== 'local') {
-        return res.status(400).json({ message: "Fuente no válida. Por ahora, solo se acepta 'local'." });
-    }
+	async function getFromDatabase(country) {
+		try {
+			return await Earthquake.findOne({ location: country });
+		} catch (e) {
+			throw new Exception(e);
+		}
+	}
 
-    try {
-        const earthquakes = await Earthquake.find({ location: new RegExp(country, 'i') });
+	async function getFromUSGS(country) {
+		const [info] = await (await fetch(`https://restcountries.com/v3.1/name/${country}`)).json()
+		if (info === undefined)
+			throw new Exception("Error when requesting country from restcountries");
+		const [latitude, longitude] = info.latlng
+		if (latitude === undefined || longitude === undefined)
+			throw new Exception("Error when requesting latitude, longitude and max radius from restcountries");
+		const maxRadius = 180
+		try {
+			return await (await fetch(`https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${latitude}&longitude=${longitude}&maxradius=${maxRadius}`)).json()
+		} catch (e) {
+			throw new Exception(e)
+		}
+	}
 
-        if (earthquakes.length === 0) {
-            return res.status(204).send();
-        }
+	async function getFromEMSC(country) {
+		const [info] = await (await fetch(`https://restcountries.com/v3.1/name/${country}`)).json()
+		if (info === undefined)
+			throw new Exception("Error when requesting country from restcountries");
+		const [latitude, longitude] = info.latlng
+		if (latitude === undefined || longitude === undefined)
+			throw new Exception("Error when requesting latitude, longitude and max radius from restcountries");
+		const maxRadius = 180
+		try {
+			return await (await fetch(`http://www.seismicportal.eu/testimonies-ws/api/search?lat=${latitude}&lon=${longitude}&minradius=0.1&maxradius=${maxRadius}&format=json&limit=10`)).json()
+		} catch (e) {
+			throw new Exception(e);
+		}
+	}
 
-        res.status(200).json(earthquakes);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error interno del servidor" });
-    }
+	const validSources = {
+		'local': getFromDatabase,
+		'USGS': getFromUSGS,
+		'EMSC': getFromEMSC
+	};
+
+	if (!(source in validSources)) {
+		return res.status(400)
+			.type('json')
+			.send(JSON.stringify({
+				message: `Fuente no válida. Las fuentes permitidas son: ${Object.keys(validSources)}`,
+			}));
+	}
+
+	let item
+	try {
+		item = await validSources[source](country)
+	} catch (e) {
+		return res.status(500).json({ message: `Ha ocurrido un error ${e}` });
+	}
+
+	if ((item ?? undefined) === undefined) {
+		return res.status(404).json({
+			message: 'No hay registros sismicos'
+		});
+	}
+
+	return res.status(200)
+		.type("json")
+		.send(JSON.stringify(item))
 };
 
 export default getEarthquakesBySource;
