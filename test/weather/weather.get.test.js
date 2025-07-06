@@ -3,58 +3,83 @@ import app from '../../src/index.js';
 import request from 'supertest';
 import mongoose from 'mongoose';
 
-const sampleItem = {
-    id: "clima_1",
-    city: "Caracas",
-    temperature: 30.7,
-    humidity: 82,
-    condition: "Soleado"
-};
-
-// --- Configuración de la Base de Datos para Pruebas ---
-beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
-});
-
-beforeEach(async () => {
-    // Limpia la colección antes de cada prueba
-    await mongoose.connection.db.collection('weathers').deleteMany({});
-});
-
-afterAll(async () => {
-    // Limpia y cierra la conexión al final
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
-});
-// --- Fin de la Configuración ---
-
-
 describe('GET /weather/:id', () => {
-    it('Should return a single weather record by its custom id', async () => {
-        // 1. Insertar un dato de prueba
-        await request(app)
-            .post('/weather')
-            .send(sampleItem)
-            .expect(201);
+	beforeAll(async () => {
+		await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+	});
 
-        // 2. Realizar la petición GET para ese ID
-        const response = await request(app)
-            .get(`/weather/${sampleItem.id}`)
-            .expect(200);
+	beforeEach(async () => {
+		await mongoose.connection.db.collection('weathers').deleteMany({});
+	});
 
-        // 3. Verificar que la respuesta contiene los datos correctos
-        expect(response.body).not.toBeInstanceOf(Array);
-        expect(response.body.id).toBe(sampleItem.id);
-        expect(response.body.city).toBe(sampleItem.city);
-        expect(response.body.temperature).toBe(sampleItem.temperature);
-        expect(response.body.condition).toBe(sampleItem.condition);
-    });
+	afterAll(async () => {
+		await mongoose.connection.dropDatabase();
+		await mongoose.connection.close();
+	});
 
-    it('Should return 404 when the weather id does not exist', async () => {
-        const response = await request(app)
-            .get('/weather/clima_nonexistent')
-            .expect(404);
+	const sampleItem = {
+		id: "clima_1",
+		city: "Caracas",
+		temperature: 30.7,
+		humidity: 82,
+		condition: "Soleado"
+	};
 
-        expect(response.body).toHaveProperty('message', 'No se encontró el registro climático');
-    });
+	it('Should return the most recent weather record from the DB', async () => {
+		await request(app)
+			.post('/weather')
+			.send(sampleItem)
+			.expect(201);
+
+		const response = await request(app)
+			.get(`/weather/local?city=${sampleItem.city}`)
+			.expect(200)
+
+		expect(response.body).toHaveProperty('_id');
+		expect(response.body.id).toBe(sampleItem.id);
+		expect(response.body.city).toBe(sampleItem.city);
+		expect(response.body.temperature).toBe(sampleItem.temperature);
+		expect(response.body.condition).toBe(sampleItem.condition);
+	});
+
+	it('Should return a WeatherAPI response', async () => {
+		const response = await request(app)
+			.get(`/weather/WeatherAPI?city=Caracas`)
+			.expect(200)
+		expect(response.body).toHaveProperty('location')
+		expect(response.body).toHaveProperty('current')
+	})
+
+	it('Should return a OpenWeatherMap response', async () => {
+		const response = await request(app)
+			.get(`/weather/OpenWeatherMap?city=Caracas`)
+			.expect(200)
+		expect(response.body).toHaveProperty("coord");
+		expect(response.body).toHaveProperty("weather");
+		expect(response.body).toHaveProperty("base");
+		expect(response.body).toHaveProperty("main");
+		expect(response.body).toHaveProperty("visibility");
+		expect(response.body).toHaveProperty("wind");
+		expect(response.body).toHaveProperty("clouds");
+		expect(response.body).toHaveProperty("dt");
+		expect(response.body).toHaveProperty("sys");
+		expect(response.body).toHaveProperty("timezone");
+		expect(response.body).toHaveProperty("id");
+		expect(response.body).toHaveProperty("name");
+		expect(response.body).toHaveProperty("cod");
+	})
+
+	it('Should return 400 when selecting an invalid source', async () => {
+		const response = await request(app)
+			.get('/weather/something_else?city=Caracas')
+			.expect(400)
+		expect(response.body).toHaveProperty('message')
+	})
+
+	it('Should return 404 when the weather id does not exist', async () => {
+		const response = await request(app)
+			.get('/weather/local?city=Dubai')
+			.expect(404);
+		expect(response.body).toHaveProperty('message');
+	});
 });
