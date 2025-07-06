@@ -3,71 +3,69 @@ import app from '../../src/index.js';
 import request from 'supertest';
 import mongoose from 'mongoose';
 
-// Muestra de datos para las pruebas
-const sampleItem1 = {
-    id: "sismo_1",
-    magnitude: 5.4,
-    depth: 30,
-    location: "Chile",
-    date: "2023-11-15"
-};
+describe('GET /earthquake/:id', () => {
+	beforeAll(async () => {
+		await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+	});
 
-const sampleItem2 = {
-    id: "sismo_2",
-    magnitude: 6.1,
-    depth: 45,
-    location: "Chile",
-    date: "2024-01-20"
-};
+	beforeEach(async () => {
+		await mongoose.connection.db.collection('weathers').deleteMany({});
+	});
 
-const sampleItem3 = {
-    id: "sismo_3",
-    magnitude: 4.8,
-    depth: 20,
-    location: "Peru",
-    date: "2023-12-10"
-};
+	afterAll(async () => {
+		await mongoose.connection.dropDatabase();
+		await mongoose.connection.close();
+	});
 
+	const sampleItem = {
+		id: "sismo_1",
+		magnitude: 5.4,
+		depth: 30,
+		location: "Chile",
+		date: "2023-11-15"
+	};
 
-beforeAll(async () => {
-    await mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+	it('Should return the most recent seismic record from the DB', async () => {
+		await request(app)
+			.post('/earthquakes')
+			.send(sampleItem)
+			.expect(201);
+
+		const response = await request(app)
+			.get(`/earthquakes/local?country=${sampleItem.location}`)
+			.expect(200)
+
+		expect(response.body).toHaveProperty('_id');
+		expect(response.body.id).toBe(sampleItem.id);
+		expect(response.body.magnitude).toBe(sampleItem.magnitude);
+		expect(response.body.depth).toBe(sampleItem.depth);
+		expect(response.body.location).toBe(sampleItem.location);
+		expect(new Date(response.body.date).toISOString()).toBe(new Date(sampleItem.date).toISOString());
+	});
+
+	it('Should return a USGS Earthquake API response', async () => {
+		await request(app)
+			.get(`/earthquakes/USGS?country=Venezuela`)
+			.expect(200)
+	})
+
+	it('Should return a EMSC response', async () => {
+		await request(app)
+			.get(`/earthquakes/EMSC?country=Venezuela`)
+			.expect(200)
+	})
+
+	it('Should return 400 when selecting an invalid source', async () => {
+		const response = await request(app)
+			.get('/earthquakes/something_else?country=Venezuela')
+			.expect(400)
+		expect(response.body).toHaveProperty('message')
+	})
+
+	it('Should return 404 when the earthquake location does not exist in the database', async () => {
+		const response = await request(app)
+			.get('/earthquakes/local?country=Fish_Island')
+			.expect(404);
+		expect(response.body).toHaveProperty('message');
+	});
 });
-
-beforeEach(async () => {
-    await mongoose.connection.db.collection('earthquakes').deleteMany({});
-});
-
-afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
-});
-
-
-
-describe('GET /earthquakes/history/:country', () => {
-    it('Should return all earthquake records for a specific country', async () => {
-        await request(app).post('/earthquakes').send(sampleItem1);
-        await request(app).post('/earthquakes').send(sampleItem2);
-        await request(app).post('/earthquakes').send(sampleItem3);
-
-        const response = await request(app)
-            .get(`/earthquakes/history/${sampleItem1.location}`)
-            .expect(200);
-
-        expect(response.body).toBeInstanceOf(Array);
-        expect(response.body.length).toBe(2); // Deben haber 2 sismos de Chile
-        expect(response.body[0].location).toBe(sampleItem1.location);
-        expect(response.body[1].location).toBe(sampleItem2.location);
-    });
-
-    // --- BLOQUE ACTUALIZADO ---
-    it('Should return 204 when no records are found for a country', async () => {
-        const response = await request(app)
-            .get('/earthquakes/history/Uruguay')
-            .expect(204); // Se espera un 204 en lugar de 404
-
-        // Se verifica que el cuerpo de la respuesta esté vacío
-        expect(response.body).toEqual({});
-        expect(response.text).toBe('');
-    });
-})
