@@ -1,5 +1,4 @@
 import Earthquake from './earthquake.schema.js';
-import axios from 'axios';
 
 /**
  * @swagger
