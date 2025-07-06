@@ -1,104 +1,94 @@
 import Weather from './weather.schema.js';
-import axios from 'axios';
 
 /**
  * @swagger
- * /weather/history/{source}/{city}:
+ * /weather/history/{city}:
  *   get:
- *     summary: Obtener historial climático por ciudad
- *     description: >-
- *       Retorna todos los registros climáticos históricos de una ciudad específica
- *       almacenados en la base de datos local o de fuentes externas.
- *     tags:
- *       - Meteorología
+ *     summary: Retrieve historical weather data for a specific city
+ *     description: Fetches the weather history for the specified city. Returns an error if the city is not provided or if no records are found.
  *     parameters:
- *       - name: source
- *         in: path
- *         required: true
- *         description: La fuente de los datos ('local', 'USGS', 'EMSC').
- *         schema:
- *           type: string
- *           enum: [local, USGS, EMSC]
- *           example: local
  *       - name: city
  *         in: path
  *         required: true
- *         description: La ciudad para la cual se desea obtener el historial climático.
+ *         description: The name of the city for which to retrieve weather history.
  *         schema:
  *           type: string
- *           example: Lima
  *     responses:
- *       '200':
- *         description: OK. Retorna un array con los registros climáticos de la ciudad.
+ *       200:
+ *         description: Successful response with weather history data.
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Weather'
- *       '204':
- *         description: No Content. No se encontraron registros para la ciudad especificada.
- *       '400':
- *         description: Bad Request. Fuente no válida.
- *       '500':
- *         description: Error interno del servidor.
+ *                 type: object
+ *                 properties:
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                     description: The date of the weather record.
+ *                   temperature:
+ *                     type: number
+ *                     format: float
+ *                     description: The recorded temperature.
+ *                   humidity:
+ *                     type: number
+ *                     format: float
+ *                     description: The recorded humidity level.
+ *                   conditions:
+ *                     type: string
+ *                     description: Description of the weather conditions.
+ *       400:
+ *         description: Bad request if the city parameter is undefined.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: No weather records found for the specified city.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Internal server error if an error occurs while fetching data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
-
 const getWeatherHistoryByCity = async (req, res) => {
-    const { source } = req.params;
-    const { city } = req.params;
+	const { city } = req.params;
 
-    try {
-        let weatherHistory;
+	if (city === undefined)
+		return res.status(400)
+			.type('json')
+			.send(JSON.stringify({ message: "Error: city cannot be undefined" }))
 
-        switch (source.toLowerCase()) {
-            case 'local':
-                // Buscar en la base de datos local (MongoDB)
-                weatherHistory = await Weather.find({ city: new RegExp(city, 'i') });
-                break;
+	let result
+	try {
+		result = await Weather.find({ city })
+	} catch (e) {
+		return res.status(500).json({ message: `Ha ocurrido un error ${e}` });
+	}
 
-            case 'usgs':
-                // Obtener datos de la API de USGS
-                const usgsResponse = await axios.get(`https://api.weather.com/v3/wx/conditions/historical?city=${city}&apiKey=YOUR_API_KEY`);
-                weatherHistory = usgsResponse.data.map(record => ({
-                    temperature: record.temperature,
-                    description: record.weather,
-                    date: record.date,
-                }));
-                break;
+	if (result.length === 0)
+		return res.status(404)
+			.type('json')
+			.send(JSON.stringify({ message: "No hay registros climáticos" }))
 
-            case 'emsc':
-                // Obtener datos de la API de EMSC
-                const emscResponse = await axios.get(`https://api.emsc-csem.org/v1/weather?city=${city}`);
-                // Aquí deberías procesar la respuesta de EMSC según su formato
-                weatherHistory = emscResponse.data; // Ajusta esto según la estructura de la respuesta
-                break;
-
-            default:
-                return res.status(400).json({ message: "Fuente no válida. Las fuentes permitidas son: 'local', 'USGS', 'EMSC'." });
-        }
-
-        if (!weatherHistory || weatherHistory.length === 0) {
-            return res.status(204).send();
-        }
-
-        return res.status(200).json(weatherHistory);
-    } catch (error) {
-        console.error('Error fetching weather history:', error);
-        
-        // Manejo especial para errores de base de datos
-        if (error.name === 'MongoError') {
-            return res.status(503).json({ 
-                message: "Error temporal con la base de datos",
-                suggestion: "Intente nuevamente más tarde"
-            });
-        }
-        
-        return res.status(500).json({ 
-            message: "Error interno del servidor",
-            error_code: "WEATHER_HISTORY_FETCH_ERROR"
-        });
-    }
+	return res.status(200)
+		.type('json')
+		.send(JSON.stringify(result))
 };
 
 export default getWeatherHistoryByCity;
