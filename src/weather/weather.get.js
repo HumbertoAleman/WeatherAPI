@@ -1,48 +1,39 @@
 import Weather from './weather.schema.js';
-import axios from 'axios';
 
 /**
  * @swagger
  * /weather/{source}:
  *   get:
- *     summary: Obtiene datos climáticos de una fuente
- *     description: >-
- *       Obtiene datos climáticos de una fuente específica. Si la fuente es 'local',
- *       busca en la base de datos por la ciudad especificada en el query param 'city'.
- *     tags:
- *       - Meteorología
+ *     summary: Retrieve weather information by source
+ *     description: Fetches weather data for a specified city from a designated source.
  *     parameters:
  *       - name: source
  *         in: path
  *         required: true
- *         description: La fuente de los datos ('local', 'USGS', 'EMSC').
+ *         description: The source from which to fetch weather data. Valid sources are 'local', 'OpenWeatherMap', and 'WeatherAPI'.
  *         schema:
  *           type: string
- *           enum: [local, USGS, EMSC]
- *           example: local
+ *           enum: [local, OpenWeatherMap, WeatherAPI]
  *       - name: city
  *         in: query
  *         required: true
- *         description: Ciudad para filtrar (mínimo 2 caracteres, solo letras y espacios)
+ *         description: The name of the city for which to retrieve weather data.
  *         schema:
  *           type: string
- *           minLength: 2
- *           pattern: '^[a-zA-Z\s]+$'
- *           example: Caracas
  *     responses:
  *       '200':
- *         description: OK. Retorna array con registros climáticos
+ *         description: Successful response containing weather data.
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Weather'
+ *               type: object
+ *               properties:
+ *                 weather:
+ *                   type: object
+ *                   description: Weather data retrieved from the specified source.
+ *                   additionalProperties: true
  *       '400':
- *         description: |
- *           Bad Request. Posibles errores:
- *           - Fuente no válida (solo 'local' permitido)
- *           - Parámetro city inválido (formato incorrecto)
+ *         description: Bad request due to invalid source or missing city parameter.
  *         content:
  *           application/json:
  *             schema:
@@ -50,89 +41,91 @@ import axios from 'axios';
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "El parámetro 'city' debe contener solo letras y espacios (mínimo 2 caracteres)"
+ *                 valid_sources:
+ *                   type: array
+ *                   items:
+ *                     type: string
  *       '404':
- *         description: Ciudad no encontrada
+ *         description: No weather records found for the specified city.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       '500':
- *         description: Error interno del servidor
+ *         description: Internal server error due to an unexpected issue.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
 const getWeatherBySource = async (req, res) => {
-    const { source } = req.params;
-    const { city } = req.query;
+	const { source } = req.params;
+	const { city } = req.query;
 
-    // Validación de source
-    if (!['local', 'usgs', 'emsc'].includes(source.toLowerCase())) {
-        return res.status(400).json({ 
-            message: "Fuente no válida. Las fuentes permitidas son: 'local', 'USGS', 'EMSC'.",
-            valid_sources: ["local", "USGS", "EMSC"]
-        });
-    }
 
-    // Validación robusta de city
-    const cityRegex = /^[a-zA-Z\s]{2,}$/;
-    if (!city || !cityRegex.test(city)) {
-        return res.status(400).json({
-            message: "Parámetro city inválido. Debe contener solo letras y espacios (mínimo 2 caracteres)",
-            example: "Caracas",
-            pattern: "/^[a-zA-Z\\s]{2,}$/"
-        });
-    }
+	async function getFromDatabase(city) {
+		try {
+			return await Weather.findOne({ city });
+		} catch (e) {
+			throw new Exception(e);
+		}
+	}
 
-    try {
-        let weatherRecords;
+	async function getFromOpenWeatherMap(city) {
+		const { OPEN_WEATHER_MAP_API_KEY } = process.env
+		try {
+			return await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${OPEN_WEATHER_MAP_API_KEY}`)).json()
+		} catch (e) {
+			throw new Exception(e);
+		}
+	}
 
-        switch (source.toLowerCase()) {
-            case 'local':
-                const sanitizedCity = city.trim().replace(/\s+/g, ' ');
-                weatherRecords = await Weather.find({ 
-                    city: new RegExp(`^${sanitizedCity}$`, 'i') 
-                });
-                break;
+	async function getFromWeatherAPI(city) {
+		const { WEATHER_API_API_KEY } = process.env
+		try {
+			return await (await fetch(`http://api.weatherapi.com/v1/current.json?key=${WEATHER_API_API_KEY}&q=${city}`)).json()
+		} catch (e) {
+			throw new Exception(e);
+		}
+	}
 
-            case 'usgs':
-                // Obtener datos de la API de USGS
-                const usgsResponse = await axios.get(`https://api.weather.com/v3/wx/conditions/current?city=${city}&apiKey=YOUR_API_KEY`);
-                weatherRecords = [{
-                    temperature: usgsResponse.data.temperature,
-                    description: usgsResponse.data.weather,
-                    city: usgsResponse.data.city,
-                }];
-                break;
+	const validSources = {
+		'local': getFromDatabase,
+		'OpenWeatherMap': getFromOpenWeatherMap,
+		'WeatherAPI': getFromWeatherAPI
+	};
 
-            case 'emsc':
-                // Obtener datos de la API de EMSC
-                const emscResponse = await axios.get(`https://api.emsc-csem.org/v1/weather?city=${city}`);
-                // Aquí deberías procesar la respuesta de EMSC según su formato
-                weatherRecords = emscResponse.data; // Ajusta esto según la estructura de la respuesta
-                break;
+	if (!(source in validSources)) {
+		return res.status(400)
+			.type('json')
+			.send(JSON.stringify({
+				message: `Fuente no válida. Las fuentes permitidas son: ${Object.keys(validSources)}`,
+			}));
+	}
 
-            default:
-                return res.status(400).json({ message: "Fuente no válida." });
-        }
+	let item
+	try {
+		item = await validSources[source](city)
+	} catch (e) {
+		return res.status(500).json({ message: `Ha ocurrido un error ${e}` });
+	}
 
-        if (!weatherRecords || weatherRecords.length === 0) {
-            return res.status(404).json({ 
-                message: `No se encontraron registros para la ciudad '${city}'`
-            });
-        }
+	if ((item ?? undefined) === undefined) {
+		return res.status(404).json({
+			message: 'No hay registros climáticos'
+		});
+	}
 
-        return res.status(200).json(weatherRecords);
-    } catch (error) {
-        console.error('Error fetching weather data:', error);
-        
-        // Manejo especial para errores de base de datos
-        if (error.name === 'MongoError') {
-            return res.status(503).json({ 
-                message: "Error temporal con la base de datos",
-                suggestion: "Intente nuevamente más tarde"
-            });
-        }
-        
-        return res.status(500).json({ 
-            message: "Error interno del servidor",
-            error_code: "WEATHER_FETCH_ERROR"
-        });
-    }
+	return res.status(200)
+		.type("json")
+		.send(JSON.stringify(item))
 };
+
 
 export default getWeatherBySource;
