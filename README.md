@@ -17,7 +17,7 @@ WeatherAPI is a project for the course "Topicos Esceciales para la Programacion"
 - **Mongoose**: ODM Library
 - **Jest**: Testing
 - **Supertest**: HTTP Testing
-- **Swagger****************: Documentation
+- **Swagger** Documentation
 
 ## Running the API
 
