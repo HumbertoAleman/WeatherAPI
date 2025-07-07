@@ -6,6 +6,8 @@ import Earthquake from './earthquake.schema.js'
  *   post:
  *     summary: Create a new earthquake record
  *     description: This endpoint allows you to create a new record of an earthquake, including its magnitude, depth, location, and date.
+ *     tags:
+ *       - Sismologia
  *     requestBody:
  *       required: true
  *       content:
@@ -41,25 +43,31 @@ import Earthquake from './earthquake.schema.js'
  *               properties:
  *                 _id:
  *                   type: string
- *                   example: "686059c7a40a9df9d20d9f2a"
+ *                   description: MongoID string of the earthquake record.
+ *                   example: 507f1f77bcf86cd799439011
  *                 id:
  *                   type: string
- *                   example: "sismo-65536"
- *                 magnitude:
- *                   type: number
- *                   format: float
- *                   example: 8.2
- *                 depth:
- *                   type: number
- *                   format: float
- *                   example: 12.5
- *                 location:
- *                   type: string
- *                   example: "Venezuela"
+ *                   description: Internal ID of the earthquake record.
+ *                   example: sismo_32290
  *                 date:
  *                   type: string
  *                   format: date
- *                   example: "2025-12-01"
+ *                   description: The date of the earthquake record.
+ *                   example: 2025-06-07
+ *                 depth:
+ *                   type: number
+ *                   format: float
+ *                   description: The depth of the earthquake.
+ *                   example: 32.1
+ *                 magnitude:
+ *                   type: number
+ *                   format: float
+ *                   description: The magnitude of the earthquake.
+ *                   example: 8.2
+ *                 location:
+ *                   type: string
+ *                   description: The location of the earthquake.
+ *                   example: Caracas
  *       400:
  *         description: Bad request, invalid input
  *         content:

@@ -4,6 +4,8 @@ import Weather from './weather.schema.js';
  * @swagger
  * /weather/history/{city}:
  *   get:
+ *     tags:
+ *       - Metereologia
  *     summary: Retrieve historical weather data for a specific city
  *     description: Fetches the weather history for the specified city. Returns an error if the city is not provided or if no records are found.
  *     parameters:
@@ -23,21 +25,26 @@ import Weather from './weather.schema.js';
  *               items:
  *                 type: object
  *                 properties:
- *                   date:
+ *                   _id:
  *                     type: string
- *                     format: date
- *                     description: The date of the weather record.
+ *                     example: "686059c7a40a9df9d20d9f2a"
+ *                   id:
+ *                     type: string
+ *                     example: "clima-65536"
+ *                   city:
+ *                     type: string
+ *                     example: "Caracas"
  *                   temperature:
  *                     type: number
  *                     format: float
- *                     description: The recorded temperature.
+ *                     example: 8.2
  *                   humidity:
  *                     type: number
  *                     format: float
- *                     description: The recorded humidity level.
- *                   conditions:
+ *                     example: 12.5
+ *                   condition:
  *                     type: string
- *                     description: Description of the weather conditions.
+ *                     example: "Nublado"
  *       400:
  *         description: Bad request if the city parameter is undefined.
  *         content:

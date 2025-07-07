@@ -14,6 +14,8 @@ import Earthquake from './earthquake.schema.js'
  *         schema:
  *           type: string
  *           pattern: '^sismo_\\d+$'
+ *     tags:
+ *       - Sismologia
  *     responses:
  *       '200':
  *         description: Successfully deleted the earthquake record.
@@ -24,24 +26,31 @@ import Earthquake from './earthquake.schema.js'
  *               properties:
  *                 _id:
  *                   type: string
+ *                   description: MongoID string of the earthquake record.
+ *                   example: 507f1f77bcf86cd799439011
  *                 id:
  *                   type: string
- *                   example: "sismo-1"
- *                 magnitude:
- *                   type: number
- *                   format: float
- *                   example: 7.2
- *                 depth:
- *                   type: number
- *                   format: float
- *                   example: 10.2
- *                 location:
- *                   type: string
- *                   example: "Venezuela"
+ *                   description: Internal ID of the earthquake record.
+ *                   example: sismo_32290
  *                 date:
  *                   type: string
  *                   format: date
- *                   example: "2025-12-01"
+ *                   description: The date of the earthquake record.
+ *                   example: 2025-06-07
+ *                 depth:
+ *                   type: number
+ *                   format: float
+ *                   description: The depth of the earthquake.
+ *                   example: 32.1
+ *                 magnitude:
+ *                   type: number
+ *                   format: float
+ *                   description: The magnitude of the earthquake.
+ *                   example: 8.2
+ *                 location:
+ *                   type: string
+ *                   description: The location of the earthquake.
+ *                   example: Caracas
  *       '204':
  *         description: No content. The earthquake record was not found.
  *       '400':
