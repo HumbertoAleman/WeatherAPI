@@ -6,6 +6,8 @@ import Earthquake from './earthquake.schema.js';
  *   get:
  *     summary: Retrieve earthquake data by source
  *     description: Fetches earthquake information based on the specified source and country. Supports multiple sources including local database, USGS, and EMSC.
+ *     tags:
+ *       - Sismologia
  *     parameters:
  *       - name: source
  *         in: path
@@ -28,28 +30,33 @@ import Earthquake from './earthquake.schema.js';
  *             schema:
  *               type: object
  *               properties:
- *                 type:
+ *                 _id:
  *                   type: string
- *                 features:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       properties:
- *                         type:
- *                           type: string
- *                         mag:
- *                           type: number
- *                         place:
- *                           type: string
- *                         time:
- *                           type: integer
- *                         coordinates:
- *                           type: array
- *                           items:
- *                             type: number
+ *                   description: MongoID string of the earthquake record.
+ *                   example: 507f1f77bcf86cd799439011
+ *                 id:
+ *                   type: string
+ *                   description: Internal ID of the earthquake record.
+ *                   example: sismo_32290
+ *                 date:
+ *                   type: string
+ *                   format: date
+ *                   description: The date of the earthquake record.
+ *                   example: 2025-06-07
+ *                 depth:
+ *                   type: number
+ *                   format: float
+ *                   description: The depth of the earthquake.
+ *                   example: 32.1
+ *                 magnitude:
+ *                   type: number
+ *                   format: float
+ *                   description: The magnitude of the earthquake.
+ *                   example: 8.2
+ *                 location:
+ *                   type: string
+ *                   description: The location of the earthquake.
+ *                   example: Caracas
  *       400:
  *         description: Invalid source provided.
  *         content:

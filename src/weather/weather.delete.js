@@ -4,6 +4,8 @@ import Weather from './weather.schema.js'
  * @swagger
  * /weathers:
  *   delete:
+ *     tags:
+ *       - Metereologia
  *     summary: Delete an weather record
  *     description: Deletes an weather record by its ID. The ID must follow the format `clima_{{number}}`.
  *     parameters:
@@ -24,6 +26,7 @@ import Weather from './weather.schema.js'
  *               properties:
  *                 _id:
  *                   type: string
+ *                   example: 507f1f77bcf86cd799439011
  *                 id:
  *                   type: string
  *                   example: "clima-65536"

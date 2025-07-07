@@ -4,6 +4,8 @@ import Weather from './weather.schema.js';
  * @swagger
  * /weather/{source}:
  *   get:
+ *     tags:
+ *       - Metereologia
  *     summary: Retrieve weather information by source
  *     description: Fetches weather data for a specified city from a designated source.
  *     parameters:
@@ -28,10 +30,26 @@ import Weather from './weather.schema.js';
  *             schema:
  *               type: object
  *               properties:
- *                 weather:
- *                   type: object
- *                   description: Weather data retrieved from the specified source.
- *                   additionalProperties: true
+ *                 _id:
+ *                   type: string
+ *                   example: "686059c7a40a9df9d20d9f2a"
+ *                 id:
+ *                   type: string
+ *                   example: "clima-65536"
+ *                 city:
+ *                   type: string
+ *                   example: "Caracas"
+ *                 temperature:
+ *                   type: number
+ *                   format: float
+ *                   example: 8.2
+ *                 humidity:
+ *                   type: number
+ *                   format: float
+ *                   example: 12.5
+ *                 condition:
+ *                   type: string
+ *                   example: "Nublado"
  *       '400':
  *         description: Bad request due to invalid source or missing city parameter.
  *         content:

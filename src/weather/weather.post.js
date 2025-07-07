@@ -4,6 +4,8 @@ import Weather from './weather.schema.js'
  * @swagger
  * /weather:
  *   post:
+ *     tags:
+ *       - Metereologia
  *     summary: Create a new weather record
  *     description: This endpoint allows you to create a new record of an weather, including its temperature, humidity, city, and condition.
  *     requestBody:
