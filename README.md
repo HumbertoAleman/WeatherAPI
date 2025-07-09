@@ -71,7 +71,7 @@ And the API will bind to [localhost:3000](127.0.0.1:3000)
 To fetch earthquake data from the endpoint `/earthquakes/{source}`, you can use the following `curl` command:
 
 ```bash
-curl -X GET "https://api.example.com/earthquakes/sismo_32290" -H "Accept: application/json"
+curl -X GET "https://localhost:3000/earthquakes/sismo_32290" -H "Accept: application/json"
 # Returns:
 # {
 #   "_id": "507f1f77bcf86cd799439011",
